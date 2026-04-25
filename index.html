@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Vault</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg0:#0d1117; --bg1:#161b22; --bg2:#1c2230; --bg3:#21262d;
+    --border:#30363d; --accent:#58a6ff; --accent2:#3fb950;
+    --danger:#f85149; --warn:#e3b341;
+    --text0:#e6edf3; --text1:#8b949e; --text2:#6e7681;
+    --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+  }
+
+  html,body { height:100%; overflow:hidden; }
+  body { background:var(--bg0); color:var(--text0); font-family:var(--sans); font-size:14px; }
+
+  .app { display:grid; grid-template-rows:52px 1fr; height:100vh; }
+
+  /* TOPBAR */
+  .topbar { background:var(--bg1); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; padding:0 20px; }
+  .logo { font-family:var(--mono); font-size:14px; font-weight:600; color:var(--accent); letter-spacing:-.5px; user-select:none; }
+  .logo span { color:var(--accent2); }
+  .search-wrap { position:relative; flex:1; max-width:300px; }
+  .search-wrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); pointer-events:none; opacity:.45; }
+  .search { width:100%; background:var(--bg2); border:1px solid var(--border); color:var(--text0); font-family:var(--sans); font-size:13px; padding:7px 12px 7px 34px; border-radius:7px; outline:none; transition:.15s; }
+  .search::placeholder { color:var(--text2); } .search:focus { border-color:var(--accent); }
+  .topbar-spacer { flex:1; }
+
+  .storage-bar-wrap { display:flex; align-items:center; gap:8px; }
+  .storage-bar-track { width:90px; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; border:1px solid var(--border); }
+  .storage-bar-fill { height:100%; border-radius:3px; background:var(--accent2); transition:.4s; }
+  .storage-bar-fill.warn { background:var(--warn); }
+  .storage-bar-fill.danger { background:var(--danger); }
+  .storage-text { font-family:var(--mono); font-size:11px; color:var(--text2); white-space:nowrap; }
+
+  .btn { font-family:var(--sans); font-size:13px; font-weight:500; padding:7px 16px; border-radius:7px; border:none; cursor:pointer; transition:.15s; white-space:nowrap; }
+  .btn-primary { background:var(--accent); color:#0d1117; } .btn-primary:hover { filter:brightness(1.12); }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text0); } .btn-ghost:hover { background:var(--bg3); border-color:var(--text1); }
+  .btn-sm { font-size:12px; padding:5px 12px; }
+  .btn-danger { background:transparent; border:1px solid var(--danger); color:var(--danger); font-size:12px; padding:5px 12px; border-radius:7px; cursor:pointer; font-family:var(--sans); font-weight:500; transition:.15s; }
+  .btn-danger:hover { background:rgba(248,81,73,.1); }
+
+  .main { display:grid; grid-template-columns:280px 1fr; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { background:var(--bg1); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+  .sidebar-hdr { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--text2); font-weight:600; }
+  .badge { background:var(--bg3); border:1px solid var(--border); font-family:var(--mono); font-size:10px; color:var(--text2); padding:1px 7px; border-radius:10px; margin-left:auto; }
+  .file-list { flex:1; overflow-y:auto; padding:6px; }
+  .file-list::-webkit-scrollbar { width:4px; } .file-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+  .file-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:7px; cursor:pointer; border:1px solid transparent; margin-bottom:3px; transition:.12s; }
+  .file-item:hover { background:var(--bg2); border-color:var(--border); }
+  .file-item.active { background:var(--bg2); border-color:var(--accent); }
+  .file-icon { width:34px; height:34px; border-radius:7px; flex-shrink:0; background:rgba(88,166,255,.1); border:1px solid rgba(88,166,255,.2); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:9px; font-weight:600; color:var(--accent); }
+  .file-info { flex:1; min-width:0; }
+  .file-name { font-family:var(--mono); font-size:12px; font-weight:500; color:var(--text0); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .file-meta { font-size:11px; color:var(--text2); margin-top:2px; }
+  .file-tag { display:inline-block; background:rgba(63,185,80,.1); color:var(--accent2); font-size:10px; padding:1px 6px; border-radius:3px; font-family:var(--mono); margin-top:3px; }
+  .empty-list { padding:24px 14px; text-align:center; color:var(--text2); font-size:12px; line-height:1.8; }
+
+  .content { background:var(--bg0); display:flex; flex-direction:column; overflow:hidden; }
+
+  /* DROPZONE */
+  .dropzone { flex:1; margin:24px; border:2px dashed var(--border); border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; cursor:pointer; transition:.2s; text-align:center; padding:40px; }
+  .dropzone:hover, .dropzone.dragover { border-color:var(--accent); background:rgba(88,166,255,.04); }
+  .dropzone-icon { width:60px; height:60px; border-radius:14px; background:var(--bg2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+  .dropzone h2 { font-family:var(--mono); font-size:16px; font-weight:500; color:var(--text1); }
+  .dropzone p { font-size:13px; color:var(--text2); line-height:1.7; max-width:320px; }
+  .dropzone-or { font-size:12px; color:var(--text2); font-family:var(--mono); }
+  .limit-badge { background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.25); color:var(--accent2); font-family:var(--mono); font-size:11px; padding:4px 12px; border-radius:20px; }
+
+  .loading { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; color:var(--text2); font-family:var(--mono); font-size:13px; }
+  .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* VIEWER */
+  .viewer { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .viewer-topbar { background:var(--bg1); border-bottom:1px solid var(--border); padding:10px 18px; display:flex; align-items:center; gap:10px; }
+  .viewer-name { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--text0); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .viewer-actions { display:flex; gap:8px; flex-shrink:0; }
+  .tab-bar { background:var(--bg1); border-bottom:1px solid var(--border); display:flex; }
+  .tab { padding:9px 18px; font-size:12px; font-family:var(--mono); color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; transition:.12s; user-select:none; }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); } .tab:hover:not(.active) { color:var(--text0); }
+  .viewer-body { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+
+  .preview-wrap { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .preview-bar { background:var(--bg1); border-bottom:1px solid var(--border); padding:7px 18px; display:flex; align-items:center; gap:8px; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--accent2); flex-shrink:0; }
+  .preview-label { font-size:11px; font-family:var(--mono); color:var(--text2); }
+  iframe.preview-frame { flex:1; border:none; background:#fff; width:100%; height:100%; }
+
+  .code-view { flex:1; overflow:auto; padding:20px; }
+  .code-view pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--text1); white-space:pre-wrap; word-break:break-word; }
+
+  .info-view { flex:1; overflow:auto; padding:24px; }
+  .info-section { margin-bottom:22px; }
+  .info-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--text2); font-weight:600; margin-bottom:8px; display:block; }
+  .info-input { width:100%; background:var(--bg1); border:1px solid var(--border); color:var(--text0); font-family:var(--sans); font-size:13px; padding:9px 12px; border-radius:7px; outline:none; transition:.15s; }
+  .info-input:focus { border-color:var(--accent); } .info-input::placeholder { color:var(--text2); }
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; }
+  .stat-card { background:var(--bg1); border:1px solid var(--border); border-radius:9px; padding:14px; }
+  .stat-val { font-family:var(--mono); font-size:20px; font-weight:600; color:var(--accent); margin-bottom:4px; }
+  .stat-lbl { font-size:11px; color:var(--text2); }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:200; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--bg1); border:1px solid var(--border); border-radius:12px; padding:26px; width:400px; max-width:90vw; }
+  .modal h3 { font-family:var(--mono); font-size:14px; font-weight:600; margin-bottom:10px; }
+  .modal p { font-size:13px; color:var(--text1); line-height:1.7; margin-bottom:22px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+
+  .toast { position:fixed; bottom:20px; right:20px; background:var(--accent2); color:#0d1117; font-size:13px; font-weight:600; padding:10px 20px; border-radius:9px; transform:translateY(70px); transition:.3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; z-index:999; font-family:var(--sans); }
+  .toast.show { transform:translateY(0); }
+
+  ::-webkit-scrollbar { width:6px; height:6px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:6px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="logo">&lt;<span>/</span>&gt;&nbsp;HTMLVault</div>
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search" type="text" id="searchInput" placeholder="Buscar archivos..." oninput="filterList(this.value)">
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="storage-bar-wrap">
+      <div class="storage-bar-track"><div class="storage-bar-fill" id="storageFill" style="width:0%"></div></div>
+      <span class="storage-text" id="storageText">0 MB / 50 MB</span>
+    </div>
+    <button class="btn btn-primary" onclick="pickFiles()">+ Subir archivos</button>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-hdr">Mis archivos <span class="badge" id="badge">0</span></div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+    <div class="content" id="content">
+      <div class="loading"><div class="spinner"></div>Iniciando vault...</div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="filePicker" accept=".html,.htm" multiple style="display:none" onchange="handleFileInput(this.files)">
+
+<div class="modal-overlay" id="delModal">
+  <div class="modal">
+    <h3>¿Eliminar archivo?</h3>
+    <p>Se eliminará <strong id="delName"></strong>. Esta acción no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" style="padding:7px 16px;font-size:13px" onclick="confirmDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   INDEXEDDB — sin el límite de 5 MB del localStorage
+   Límite visual configurado en 50 MB
+═══════════════════════════════════════════════════ */
+const DB_NAME    = 'HTMLVaultDB';
+const DB_VERSION = 1;
+const STORE      = 'files';
+const SOFT_LIMIT = 50 * 1024 * 1024; // 50 MB
+
+let db          = null;
+let fileIndex   = []; // solo metadatos: [{id,name,tag,size,savedAt}]
+let activeId    = null;
+let activeTab   = 'preview';
+let pendingDelId = null;
+let toastTimer  = null;
+
+/* ── IndexedDB helpers ── */
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      if (!e.target.result.objectStoreNames.contains(STORE))
+        e.target.result.createObjectStore(STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+function dbGetAll() {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE,'readonly').objectStore(STORE).getAll();
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+function dbGet(id) {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE,'readonly').objectStore(STORE).get(id);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+function dbPut(record) {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE,'readwrite').objectStore(STORE).put(record);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+function dbDelete(id) {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE,'readwrite').objectStore(STORE).delete(id);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+/* ── Utilidades ── */
+function uid()  { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmtSize(b) {
+  if (b < 1024)    return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function totalUsed() { return fileIndex.reduce((s,f) => s + (f.size||0), 0); }
+
+function updateStorageBar() {
+  const used = totalUsed();
+  const pct  = Math.min(100, (used / SOFT_LIMIT) * 100);
+  document.getElementById('storageFill').style.width = pct.toFixed(1) + '%';
+  document.getElementById('storageFill').className = 'storage-bar-fill' + (pct>90?' danger':pct>70?' warn':'');
+  document.getElementById('storageText').textContent = `${(used/1048576).toFixed(1)} MB / 50 MB`;
+  document.getElementById('badge').textContent = fileIndex.length;
+}
+
+/* ── Init ── */
+async function init() {
+  try {
+    db = await openDB();
+    const all = await dbGetAll();
+    fileIndex = all.map(f => ({ id:f.id, name:f.name, tag:f.tag||'', size:f.size||0, savedAt:f.savedAt }));
+    fileIndex.sort((a,b) => b.savedAt - a.savedAt);
+    renderList();
+    updateStorageBar();
+    showDropzone();
+  } catch(err) {
+    document.getElementById('content').innerHTML =
+      `<div class="loading" style="color:var(--danger)">Error al abrir IndexedDB:<br>${err.message}</div>`;
+  }
+}
+
+/* ── Subir archivos ── */
+function pickFiles() { document.getElementById('filePicker').click(); }
+
+function handleFileInput(flist) {
+  if (!flist || !flist.length) return;
+  processFiles(Array.from(flist));
+  document.getElementById('filePicker').value = '';
+}
+
+async function processFiles(fileArray) {
+  const htmlFiles = fileArray.filter(f => f.name.match(/\.html?$/i));
+  if (!htmlFiles.length) { showToast('Solo archivos .html o .htm'); return; }
+
+  const incoming = htmlFiles.reduce((s,f) => s + f.size, 0);
+  if (totalUsed() + incoming > SOFT_LIMIT) {
+    showToast('⚠️ Límite de 50 MB alcanzado'); return;
+  }
+
+  let added = 0, updated = 0;
+  for (const f of htmlFiles) {
+    const code = await readAsText(f);
+    const existIdx = fileIndex.findIndex(x => x.name === f.name);
+    const id  = existIdx >= 0 ? fileIndex[existIdx].id : uid();
+    const tag = existIdx >= 0 ? fileIndex[existIdx].tag : '';
+    await dbPut({ id, name:f.name, tag, size:f.size, savedAt:Date.now(), code });
+    const meta = { id, name:f.name, tag, size:f.size, savedAt:Date.now() };
+    if (existIdx >= 0) { fileIndex[existIdx] = meta; updated++; }
+    else               { fileIndex.unshift(meta); added++; }
+  }
+
+  updateStorageBar();
+  renderList();
+  if (fileIndex.length > 0) openFile(fileIndex[0].id);
+  showToast(`${added} nuevo(s), ${updated} actualizado(s) ✓`);
+}
+
+function readAsText(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = e => res(e.target.result);
+    r.onerror = () => rej(new Error('Error leyendo ' + file.name));
+    r.readAsText(file);
+  });
+}
+
+/* ── Drag & drop ── */
+function setupDrop() {
+  const dz = document.getElementById('dz');
+  if (!dz) return;
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+  ['dragleave','dragend','drop'].forEach(ev => dz.addEventListener(ev, () => dz.classList.remove('dragover')));
+  dz.addEventListener('drop', e => { e.preventDefault(); processFiles(Array.from(e.dataTransfer.files)); });
+  dz.addEventListener('click', pickFiles);
+}
+
+/* ── Render lista ── */
+function filterList(q) { renderList(q.toLowerCase().trim()); }
+
+function renderList(q = '') {
+  const el = document.getElementById('fileList');
+  const shown = fileIndex.filter(f => !q || f.name.toLowerCase().includes(q) || (f.tag||'').toLowerCase().includes(q));
+  if (!shown.length) {
+    el.innerHTML = `<div class="empty-list">${q ? 'Sin resultados para<br><strong>'+esc(q)+'</strong>' : 'Aún no tienes archivos.<br>Sube tu primer HTML.'}</div>`;
+    return;
+  }
+  el.innerHTML = shown.map(f => `
+    <div class="file-item${f.id===activeId?' active':''}" onclick="openFile('${f.id}')">
+      <div class="file-icon">HTML</div>
+      <div class="file-info">
+        <div class="file-name">${esc(f.name)}</div>
+        <div class="file-meta">${fmtSize(f.size)} · ${fmtDate(f.savedAt)}</div>
+        ${f.tag ? `<div class="file-tag">${esc(f.tag)}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+/* ── Dropzone ── */
+function showDropzone() {
+  document.getElementById('content').innerHTML = `
+    <div class="dropzone" id="dz">
+      <div class="dropzone-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <h2>Arrastra tus archivos HTML aquí</h2>
+      <div class="dropzone-or">— o —</div>
+      <button class="btn btn-primary" onclick="event.stopPropagation();pickFiles()">Seleccionar archivos</button>
+      <p>Acepta .html y .htm · Múltiples archivos a la vez<br>Almacenamiento en tu navegador con IndexedDB</p>
+      <div class="limit-badge">✓ Límite: 50 MB</div>
+    </div>`;
+  setupDrop();
+  activeId = null;
+}
+
+/* ── Viewer ── */
+function openFile(id) {
+  activeId  = id;
+  activeTab = 'preview';
+  renderList(document.getElementById('searchInput').value.toLowerCase().trim());
+  renderViewer();
+}
+
+function renderViewer() {
+  const meta = fileIndex.find(x => x.id === activeId);
+  if (!meta) return;
+  document.getElementById('content').innerHTML = `
+    <div class="viewer">
+      <div class="viewer-topbar">
+        <div class="viewer-name" id="viewerName">${esc(meta.name)}</div>
+        <div class="viewer-actions">
+          <button class="btn btn-ghost btn-sm" onclick="copyCode()">Copiar código</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadFile()">Descargar</button>
+          <button class="btn btn-danger" onclick="openDelModal('${meta.id}')">Eliminar</button>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab${activeTab==='preview'?' active':''}" onclick="switchTab('preview')">Vista previa</div>
+        <div class="tab${activeTab==='code'?' active':''}" onclick="switchTab('code')">Código fuente</div>
+        <div class="tab${activeTab==='info'?' active':''}" onclick="switchTab('info')">Detalles</div>
+      </div>
+      <div class="viewer-body" id="viewerBody">
+        <div class="loading"><div class="spinner"></div>Cargando...</div>
+      </div>
+    </div>`;
+  renderTab();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['preview','code','info'][i] === tab));
+  renderTab();
+}
+
+async function renderTab() {
+  const meta = fileIndex.find(x => x.id === activeId);
+  const body = document.getElementById('viewerBody');
+  if (!meta || !body) return;
+
+  if (activeTab === 'preview') {
+    const rec  = await dbGet(activeId);
+    const url  = URL.createObjectURL(new Blob([rec.code||''], {type:'text/html'}));
+    body.innerHTML = `
+      <div class="preview-wrap">
+        <div class="preview-bar">
+          <div class="live-dot"></div>
+          <span class="preview-label">Renderizando ${esc(meta.name)}</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openFullscreen()">Abrir en pestaña ↗</button>
+        </div>
+        <iframe class="preview-frame" src="${url}" sandbox="allow-scripts allow-same-origin allow-forms allow-modals"></iframe>
+      </div>`;
+
+  } else if (activeTab === 'code') {
+    const rec = await dbGet(activeId);
+    body.innerHTML = `<div class="code-view"><pre>${esc(rec.code||'')}</pre></div>`;
+
+  } else {
+    const rec = await dbGet(activeId);
+    const lc  = (rec.code||'').split('\n').length;
+    const cc  = (rec.code||'').length;
+    body.innerHTML = `
+      <div class="info-view">
+        <div class="info-section">
+          <label class="info-label">Nombre del archivo</label>
+          <input class="info-input" id="iName" value="${esc(meta.name)}" placeholder="nombre.html" oninput="saveMeta()">
+        </div>
+        <div class="info-section">
+          <label class="info-label">Etiqueta / categoría</label>
+          <input class="info-input" id="iTag" value="${esc(meta.tag||'')}" placeholder="componente, landing, plantilla..." oninput="saveMeta()">
+        </div>
+        <div class="info-section">
+          <label class="info-label">Estadísticas</label>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-val">${fmtSize(meta.size)}</div><div class="stat-lbl">Tamaño</div></div>
+            <div class="stat-card"><div class="stat-val">${lc.toLocaleString()}</div><div class="stat-lbl">Líneas</div></div>
+            <div class="stat-card"><div class="stat-val">${cc.toLocaleString()}</div><div class="stat-lbl">Caracteres</div></div>
+            <div class="stat-card"><div class="stat-val">${fmtDate(meta.savedAt)}</div><div class="stat-lbl">Guardado</div></div>
+          </div>
+        </div>
+        <div class="info-section">
+          <label class="info-label">Reemplazar archivo</label>
+          <button class="btn btn-ghost" onclick="replaceFile('${meta.id}')">Subir nueva versión</button>
+        </div>
+      </div>`;
+  }
+}
+
+/* ── Acciones ── */
+async function saveMeta() {
+  const meta = fileIndex.find(x => x.id === activeId); if (!meta) return;
+  const n = document.getElementById('iName'), t = document.getElementById('iTag');
+  if (n && n.value.trim()) meta.name = n.value.trim();
+  if (t) meta.tag = t.value.trim();
+  const rec = await dbGet(activeId);
+  if (rec) { rec.name = meta.name; rec.tag = meta.tag; await dbPut(rec); }
+  renderList(document.getElementById('searchInput').value.toLowerCase().trim());
+  const vn = document.getElementById('viewerName'); if (vn) vn.textContent = meta.name;
+}
+
+async function copyCode() {
+  const rec = await dbGet(activeId); if (!rec) return;
+  try { await navigator.clipboard.writeText(rec.code||''); }
+  catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = rec.code||''; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  }
+  showToast('Código copiado ✓');
+}
+
+async function downloadFile() {
+  const meta = fileIndex.find(x => x.id === activeId);
+  const rec  = await dbGet(activeId); if (!rec) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([rec.code||''], {type:'text/html'}));
+  a.download = meta.name; a.click();
+  showToast('Descargando ' + meta.name);
+}
+
+async function openFullscreen() {
+  const rec = await dbGet(activeId); if (!rec) return;
+  window.open(URL.createObjectURL(new Blob([rec.code||''], {type:'text/html'})), '_blank');
+}
+
+function replaceFile(id) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.html,.htm';
+  input.onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const code = await readAsText(f);
+    const rec  = await dbGet(id); if (!rec) return;
+    rec.code = code; rec.size = f.size; rec.savedAt = Date.now();
+    await dbPut(rec);
+    const meta = fileIndex.find(x => x.id === id);
+    if (meta) { meta.size = f.size; meta.savedAt = rec.savedAt; }
+    updateStorageBar(); renderList(); renderViewer();
+    showToast('Archivo reemplazado ✓');
+  };
+  input.click();
+}
+
+/* ── Eliminar ── */
+function openDelModal(id) {
+  pendingDelId = id;
+  const meta = fileIndex.find(x => x.id === id);
+  document.getElementById('delName').textContent = meta ? meta.name : '';
+  document.getElementById('delModal').classList.add('open');
+}
+function closeModal() { document.getElementById('delModal').classList.remove('open'); pendingDelId = null; }
+
+async function confirmDelete() {
+  await dbDelete(pendingDelId);
+  fileIndex = fileIndex.filter(x => x.id !== pendingDelId);
+  updateStorageBar(); closeModal();
+  if (activeId === pendingDelId) { showDropzone(); activeId = null; }
+  renderList();
+  showToast('Archivo eliminado');
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>
